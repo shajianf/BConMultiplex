@@ -5,4 +5,6 @@ Using the uniform distribution, we consider a special threshold value for every 
 
 We aim to see if the important nodes illustrate good resistance against changing their states, how much does the density of the active nodes gets changed?
 
+I plot my result by matplotlib in python.
+
 I usually try to my code get easy to learn more:)

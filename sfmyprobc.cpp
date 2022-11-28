@@ -1,12 +1,3 @@
-/*SIS MODEl with swip up the beta.1400/2/2*/
-/*di/dt=(1-i)(1-(1-beta)^<k>i)-muo*i*/
-/*true sis*/
-
-//in this code we used my project with SF network and betweenness centrality (Brands algorithm 2001).1400.9.13
-//merge BC1.cpp and sfmypro.cpp .1400.9.13
-//we can sort fee and N0 by beetweenness centrality with this code. update 30.11.1400
-
-
 
 #include<iostream>
 #include<time.h>
@@ -21,8 +12,8 @@
 #include<stack>
 #include<queue>
 
-#define N 10000
-#define M 10
+#define N 10000				//number of nodes in each layers.
+#define M 10				//main degree for SF networks.
 
 using namespace std;
 
@@ -30,51 +21,51 @@ ofstream Inf;
 ofstream Act;
 ofstream Fee;
 
-vector <vector<int>> A(N);
-vector <vector<int>> B(N);
+vector <vector<int>> A(N);			//adjecence matrix for above layer (opinion layer) (threshold model).
+vector <vector<int>> B(N);			//adjecance matrix for another layer (disease layer) (SIS model).
 
-//double p = .007;
+//double p = .007;				// for ER networks (if you like to generate the ER network, first active this line).
 
-double p[N] = {0};                 // p= k/ n-1;
-int degree [N]={0};
+double p[N] = {0};    				//SF networks parameters.             		
+int degree [N]={0};				//degree of each nodes.
 //int sort_degree[N]={0};
 //int sort_degreenum[N]={0};
 
-double gama_Net = 2.7;
-double alpha = 1/(gama_Net-1);
+double gama_Net = 2.7;				//SF network parameter.
+double alpha = 1/(gama_Net-1);			//SF network parameter.
 
-double N0 =1000;                    // number of infected node at time 0.
+double N0 =1000;                    		//initial active nodes (for getting start to dynamics).
 
-int ensemble =50;
-int tmax = 1000;                 // time steps.
+int ensemble =50;			
+int tmax = 1000;                 		// time steps.
 
-double beta = 0.0;               // probability of a node get infected
-double muo = .80;                // probability of recovery
+double beta = 0.0;               		// probability of a node get infected (for SIS model).
+double muo = .80;                		// probability of recovery (for sIS model).
 
-double gama = .20;               //Immunazation coefficent
-double kapa = 0.50;              //self-awareness coefficent.
+double gama = .20;               		//Immunazation coefficent (an active node get infected by small probabitity (gama*beta=beta_A (beta_A <= beta))).
+double kapa = 0.50;              		//self-awareness coefficent (probability that an infected node get active in above layer).
 
-vector <int> sis(N);             //state of each node at disease layer; 1= infected , 0= suseptible.at time t. 
-vector <int> sis_up(N);          //state of each node at time t+1.
+vector <int> sis(N);             		//state of each node at disease layer; 1= infected , 0= suseptible at time t (disease layer, SIS model). 
+vector <int> sis_up(N);          		//state of each node at time t+1.
 
-vector <int> thresh(N);          //state of each node at opinion layer; 1= active , 0= passive.at time t. 
-vector <int> thresh_up(N);
+vector <int> thresh(N);          		//state of each node at opinion layer; 1= active , 0= inactive at time t (opinion layer, threshold model). 
+vector <int> thresh_up(N);			//state of each node at time t+1.
 
-vector <double> fee (N);        //adoption threshold
+vector <double> fee (N);        		//adoption threshold (consider the special thrreshold value for every node). 
 //double fee =0.20;
-vector <double> BC (N);         //betweenness centrality.
+vector <double> BC (N);         		//betweenness centrality values.
 
 
 int main(){
 
     clock_t runtime = clock();
 
-    Inf.open("mypro2 sf inf bet-rho Ranfee.txt");
-    Act.open("mypro2 sf act bet-rho Ranfee.txt");
+    Inf.open("Inf-rho.txt");			//output the density of infected nodes.
+    Act.open("act-rho.txt");			//output the density of active nodes.
     //Fee.open("degree .txt");
     srand(time(NULL));
 
-        std::default_random_engine generator;
+        std::default_random_engine generator;			//using random library.
        // std::uniform_real_distribution<double> distribution(0.0,1.0);
         //std::normal_distribution<double> distribution(.50,.05);
 
@@ -93,12 +84,12 @@ int main(){
             //p = k/N;
             double beta_A = beta*gama;
 
-            int ens[ensemble] ={0};
-            int ens_A[ensemble] ={0};
+            int ens[ensemble] ={0};			//for epidemic output.
+            int ens_A[ensemble] ={0};			//for opinion output.
      
             for(int e=0 ; e <ensemble ; e++){  
             
-                for(int b =0; b < N; b++){              //reset
+                for(int b =0; b < N; b++){              //reset all states and adjecance matrixes.
 
                     A[b].clear();
                     B[b].clear();
@@ -118,7 +109,7 @@ int main(){
                 A.resize(N);
                 B.resize(N);
 
-              //  ER networks generate;
+              // ----------------------- ER networks generate---------------------------;
               /*  for (int i=0; i< N;i++){
                     for (int j=0; j<i; j++){
 
@@ -141,11 +132,11 @@ int main(){
                     }
                 }*/
 
-
-                double constant =0;                     //generate SF networks.
+		//------------------------- SF generate networks -------------------------------.
+                double constant =0;                    
                 double tot_prob = 0 ;
 
-	            for (int i = 0; i < N ; i++){//asign weight w(i) for node i according 
+	            for (int i = 0; i < N ; i++){		//asign weight w(i) for node i according 
 		            tot_prob += pow((i+1),-alpha);
 	            }
 
@@ -228,14 +219,14 @@ int main(){
                     u++;
                 }// while u.
 
-                // *************************************** fee sort **********************************
+                // ---------------------------------- phi allocating (threshold values) -------------------------------.
                 double fee_sort[N] = {0};
 
                 std::uniform_real_distribution<double> distribution(0,1);
                 //std::normal_distribution<double> distribution(.5,.05);
                 for(int g=0; g<N; g++){
 
-                    fee_sort [g] = distribution(generator);
+                    fee [g] = distribution(generator);
 
                   //  Fee<< g << "\t" << fee[g] <<endl;
                 }
@@ -243,17 +234,18 @@ int main(){
                // Fee << "++++++++++++++++++++"<<endl;
 
                  
-                
-              // for(int c =0; c<N ; c++){                   //sort degree of each node from big to small.
+              //-------------------------- sort phi values of each node from big to small ----------------------------.
+		    
+               for(int c =0; c<N ; c++){                  
 
-                  //  fee_sort[c] = fee[c]; 
+                    fee_sort[c] = fee[c]; 
                     //sort_degreenum[c] = c;
 
                   //  Fee << c << "\t" <<sort_degree[c]<< endl;
 
-               // }
+                }
 
-                /*for(int v=0; v< N ; v++){
+                for(int v=0; v< N ; v++){
                     for(int n=0; n<N-1 ;n++){
                         double x=0;
                        // int y =0;
@@ -273,8 +265,9 @@ int main(){
                     }
                 }
 
-                //+++++++++++++++++++++++compute betweenness centrality.+++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+                //++++++++++++++++++++++++++++++++++++++++++++ compute betweenness centrality.+++++++++++++++++++++++++++++++++++++++++++++++++++++.
+		//using Brandes algorithem (2001).
+		    
                 for (int u1 = 0; u1 < N ; u1++){
                     BC[u1] = 0;
                     // sigma[u1]=0;
@@ -282,7 +275,7 @@ int main(){
 
                 for (int s=0; s<N;s++){
 
-                    stack <int> myStack;          //empty stack.
+                    stack <int> myStack;          	//empty stack.
                     list <int>  pred[N];                //empty list.
 
                     vector <int> dist(N);
@@ -372,19 +365,19 @@ int main(){
         
                   //  cout << s<<endl;
 
-                }//for s.
+                }//end for s.
 
                 //for (int u5 =0; u5<N; u5++){
 
                    // betce << u5 << "\t" << BC[u5] <<endl;
                 //}
 
-                //++++++++++++++++++++++++++++++end of BC++++++++++++++++++++++ . 
-
+                //++++++++++++++++++++++++++++++ end of BC ++++++++++++++++++++++ . 
+		//---------------------------- sort nodes by their BC values ------------------------.
                int sort_degreenum[N]={0};
                 double sort_degree[N]={0};
                     
-                for(int c =0; c<N ; c++){                   //sort degree of each node from big to small.
+                for(int c =0; c<N ; c++){                   
 
                     sort_degree[c] = BC[c]; 
                     sort_degreenum[c] = c;
@@ -445,7 +438,7 @@ int main(){
 
 
                 int y1=0;
-                while(y1 <N0) {                 //initilaze disease layer.
+                while(y1 <N0) {                 	//initilaze disease layer.
 
                     int o1=0;
                     o1 = rand()%N;
@@ -460,8 +453,10 @@ int main(){
 
                     }
                 }
-
-                /*for(int qq =0; qq<N; qq++){              //============>>>    sort fee with betweenness centrality.
+		
+		//---------------------------------- sort phi values with node's betweenness centrality --------------.    
+		    
+                for(int qq =0; qq<N; qq++){              
 
                     double o2 =0;
                     o2 = sort_degreenum[qq];
@@ -469,16 +464,16 @@ int main(){
                     fee[o2] = fee_sort[qq];
 
                   //  Fee << o2 << "\t" << fee[o2]<< "\t" << sort_degree[qq] <<endl;
-                }*/
+                }
 
 
 
                // Fee << "ooooooOOOooooooo"<<endl;
-
-                int t=0;  
+		//--------------------------------- start dynamics --------------------------------.
+                int t=0;  				
                 while(t<tmax){
-
-                    for (int f=0; f<N; f++){            //threshold model.
+			//------------------------- threshold model ---------------------------------.
+                    for (int f=0; f<N; f++){            
 
                        
                         int act_nei =0;
@@ -487,7 +482,7 @@ int main(){
                     
                         k_num = A[f].size();
 
-                        for (int f1 =0; f1 < A[f].size() ; f1++){           //calculate the active neighbour.
+                        for (int f1 =0; f1 < A[f].size() ; f1++){           //calculate the active neighbours.
 
                             int q1=0;
                             q1 = A[f][f1];
@@ -507,6 +502,7 @@ int main(){
 
                             thresh_up[f] =0;
                         }
+			// ------------------- end threshold model -------------------------------.
 
                         if((sis[f]==1)&&(thresh[f]==0)){                //self-awerness with kapa prob.
 
@@ -520,10 +516,10 @@ int main(){
                             }
                         }
 
-
+			//-------------------------------------- SIS model --------------------------.
                         float ran1= rand()/(1.+RAND_MAX);
 
-                        if ((sis[f]==1) && (ran1 < muo)){           //recovery with mu prob.
+                        if ((sis[f]==1) && (ran1 < muo)){           //get recovery with mu prob.
                             //cout <<"hello" << endl;
                             sis_up[f]=0;
                             //thresh_up[f]=0;
@@ -541,7 +537,7 @@ int main(){
 
                             float ran2 = rand()/(1.+RAND_MAX);
 
-                           if((thresh[f]==1) && (sis[f]==0) && ran2 < (beta_A * sis[q])){  //infect with beta prob.
+                           if((thresh[f]==1) && (sis[f]==0) && ran2 < (beta_A * sis[q])){  //active node get infected with beta_A prob.
                                 
                                 sis_up[f]=1;
                                 flag = true;
@@ -551,7 +547,7 @@ int main(){
 
                         
 
-                            if((thresh[f]==0) && (sis[f]==0) && (ran2 < (beta * sis[q]))){
+                            if((thresh[f]==0) && (sis[f]==0) && (ran2 < (beta * sis[q]))){  //inactive node get infected with beta prob.
 
                                 sis_up [f]=1;
                                 flag = true;
@@ -560,9 +556,10 @@ int main(){
                             if(flag) break;
                         }
                     
-                    }        
+                    }
+			//------------------------ end SIS model ---------------------------------.
                 
-                    for( int u=0; u<N ; u++){
+                    for( int u=0; u<N ; u++){		//change steps for new step.
                     
                         sis[u] = sis_up[u];
                         thresh [u] = thresh_up[u];
@@ -606,8 +603,8 @@ int main(){
                 ens_A[a]=0;
             }
             
-            Inf /*<<kapa <<'\t'*/ << beta <<'\t'<< inf/double(N * ensemble)<< endl;
-            Act /*<<kapa << '\t' */<< beta <<"\t" << act/double(N * ensemble)<< endl;
+            Inf /*<<kapa <<'\t'*/ << beta <<'\t'<< inf/double(N * ensemble)<< endl;		//txt output.
+            Act /*<<kapa << '\t' */<< beta <<"\t" << act/double(N * ensemble)<< endl;		//txt output.
             //cout<< fee <<'\t' << beta << '\t' << act/double(N * ensemble ) <<"\t" << inf/double(N * ensemble ) <<  endl;
             cout << beta <<endl;
 
